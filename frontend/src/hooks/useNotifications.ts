@@ -65,7 +65,7 @@ interface UseNotificationsProps {
 export const useNotifications = ({
   onChatMessage,
   onMessageRead,
-  onMatchNotification
+  onMatchNotification,
 }: UseNotificationsProps = {}) => {
   const eventSourceRef = useRef<EventSource | null>(null);
   const currentUser = useSelector((state: RootState) => state.auth.user);
@@ -73,7 +73,9 @@ export const useNotifications = ({
 
   const connect = useCallback(() => {
     if (!currentUser?.id || !token) {
-      console.log('No user logged in or no token available, skipping SSE connection');
+      console.log(
+        'No user logged in or no token available, skipping SSE connection'
+      );
       return;
     }
 
@@ -83,7 +85,9 @@ export const useNotifications = ({
     }
 
     // Create new SSE connection with token as query parameter
-    const eventSource = new EventSource(`http://localhost:8080/api/notifications/sse/${currentUser.id}?token=${encodeURIComponent(token)}`);
+    const eventSource = new EventSource(
+      `http://localhost:8080/api/notifications/sse/${currentUser.id}?token=${encodeURIComponent(token)}`
+    );
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
@@ -132,14 +136,22 @@ export const useNotifications = ({
 
       // Attempt to reconnect after a delay
       setTimeout(() => {
-        if (currentUser?.id && eventSourceRef.current?.readyState !== EventSource.OPEN) {
+        if (
+          currentUser?.id &&
+          eventSourceRef.current?.readyState !== EventSource.OPEN
+        ) {
           console.log('Attempting to reconnect SSE...');
           connect();
         }
       }, 5000);
     };
-
-  }, [currentUser?.id, token, onChatMessage, onMessageRead, onMatchNotification]);
+  }, [
+    currentUser?.id,
+    token,
+    onChatMessage,
+    onMessageRead,
+    onMatchNotification,
+  ]);
 
   const disconnect = useCallback(() => {
     if (eventSourceRef.current) {
@@ -165,6 +177,6 @@ export const useNotifications = ({
   return {
     isConnected: eventSourceRef.current?.readyState === EventSource.OPEN,
     connect,
-    disconnect
+    disconnect,
   };
 };

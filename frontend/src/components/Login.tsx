@@ -62,17 +62,15 @@ const Login: React.FC = () => {
 
           {error && <div className="error-message">{error}</div>}
 
-          <button
-            type="submit"
-            className="login-button"
-            disabled={isLoading}
-          >
+          <button type="submit" className="login-button" disabled={isLoading}>
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
         <div className="demo-credentials">
-          <p><strong>Demo credentials:</strong></p>
+          <p>
+            <strong>Demo credentials:</strong>
+          </p>
           <p>Email: john@example.com</p>
           <p>Email: jane@example.com</p>
           <p>Email: admin@example.com</p>

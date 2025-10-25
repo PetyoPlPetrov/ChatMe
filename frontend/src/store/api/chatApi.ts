@@ -33,7 +33,7 @@ let mockChats: Chat[] = [
     id: 'chat-1-3',
     participants: ['1', '3'],
     updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-  }
+  },
 ];
 
 let mockMessages: Record<string, Message[]> = {
@@ -44,24 +44,24 @@ let mockMessages: Record<string, Message[]> = {
       senderId: '2',
       content: 'Hey John! How are you doing?',
       timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      type: 'text'
+      type: 'text',
     },
     {
       id: 'msg-2',
       chatId: 'chat-1-2',
       senderId: '1',
-      content: 'Hi Jane! I\'m doing great, thanks for asking. How about you?',
+      content: "Hi Jane! I'm doing great, thanks for asking. How about you?",
       timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-      type: 'text'
+      type: 'text',
     },
     {
       id: 'msg-3',
       chatId: 'chat-1-2',
       senderId: '2',
-      content: 'I\'m good too! Just working on some projects.',
+      content: "I'm good too! Just working on some projects.",
       timestamp: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
-      type: 'text'
-    }
+      type: 'text',
+    },
   ],
   'chat-1-3': [
     {
@@ -70,21 +70,21 @@ let mockMessages: Record<string, Message[]> = {
       senderId: '3',
       content: 'Welcome to the system!',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-      type: 'text'
-    }
-  ]
+      type: 'text',
+    },
+  ],
 };
 
 // Update chat with last message
 const updateChatLastMessage = (chatId: string) => {
   const messages = mockMessages[chatId] || [];
   const lastMessage = messages[messages.length - 1];
-  const chatIndex = mockChats.findIndex(c => c.id === chatId);
+  const chatIndex = mockChats.findIndex((c) => c.id === chatId);
   if (chatIndex >= 0) {
     mockChats[chatIndex] = {
       ...mockChats[chatIndex],
       lastMessage,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
   }
 };
@@ -93,7 +93,11 @@ const updateChatLastMessage = (chatId: string) => {
 Object.keys(mockMessages).forEach(updateChatLastMessage);
 
 // Mock base query function
-const mockBaseQuery: BaseQueryFn<string | { url: string; method: string; body?: any }, Chat | Chat[] | Message | Message[], { status: number; data: { message: string } }> = async (args, { getState }) => {
+const mockBaseQuery: BaseQueryFn<
+  string | { url: string; method: string; body?: any },
+  Chat | Chat[] | Message | Message[],
+  { status: number; data: { message: string } }
+> = async (args, { getState }) => {
   // Check if user is authenticated
   const state = getState() as any;
   const token = state.auth.token;
@@ -103,19 +107,22 @@ const mockBaseQuery: BaseQueryFn<string | { url: string; method: string; body?: 
     return {
       error: {
         status: 401,
-        data: { message: 'Unauthorized' }
-      }
+        data: { message: 'Unauthorized' },
+      },
     };
   }
 
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   if (typeof args === 'string' && args === '') {
     // Handle getChats query - return chats for current user
-    const userChats = mockChats.filter(chat =>
-      chat.participants.includes(currentUserId)
-    ).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    const userChats = mockChats
+      .filter((chat) => chat.participants.includes(currentUserId))
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
 
     return { data: userChats };
   }
@@ -126,13 +133,13 @@ const mockBaseQuery: BaseQueryFn<string | { url: string; method: string; body?: 
     const messages = mockMessages[chatId] || [];
 
     // Check if user has access to this chat
-    const chat = mockChats.find(c => c.id === chatId);
+    const chat = mockChats.find((c) => c.id === chatId);
     if (!chat || !chat.participants.includes(currentUserId)) {
       return {
         error: {
           status: 403,
-          data: { message: 'Access denied' }
-        }
+          data: { message: 'Access denied' },
+        },
       };
     }
 
@@ -145,10 +152,11 @@ const mockBaseQuery: BaseQueryFn<string | { url: string; method: string; body?: 
       const { participantId } = args.body;
 
       // Check if chat already exists
-      const existingChat = mockChats.find(chat =>
-        chat.participants.includes(currentUserId) &&
-        chat.participants.includes(participantId) &&
-        chat.participants.length === 2
+      const existingChat = mockChats.find(
+        (chat) =>
+          chat.participants.includes(currentUserId) &&
+          chat.participants.includes(participantId) &&
+          chat.participants.length === 2
       );
 
       if (existingChat) {
@@ -159,7 +167,7 @@ const mockBaseQuery: BaseQueryFn<string | { url: string; method: string; body?: 
       const newChat: Chat = {
         id: `chat-${currentUserId}-${participantId}`,
         participants: [currentUserId, participantId],
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       mockChats.push(newChat);
@@ -174,13 +182,13 @@ const mockBaseQuery: BaseQueryFn<string | { url: string; method: string; body?: 
       const { content, type = 'text' } = args.body;
 
       // Check if user has access to this chat
-      const chat = mockChats.find(c => c.id === chatId);
+      const chat = mockChats.find((c) => c.id === chatId);
       if (!chat || !chat.participants.includes(currentUserId)) {
         return {
           error: {
             status: 403,
-            data: { message: 'Access denied' }
-          }
+            data: { message: 'Access denied' },
+          },
         };
       }
 
@@ -191,7 +199,7 @@ const mockBaseQuery: BaseQueryFn<string | { url: string; method: string; body?: 
         senderId: currentUserId,
         content,
         timestamp: new Date().toISOString(),
-        type
+        type,
       };
 
       // Add message to storage
@@ -210,8 +218,8 @@ const mockBaseQuery: BaseQueryFn<string | { url: string; method: string; body?: 
   return {
     error: {
       status: 404,
-      data: { message: 'Endpoint not found' }
-    }
+      data: { message: 'Endpoint not found' },
+    },
   };
 };
 
@@ -226,7 +234,9 @@ export const chatApi = createApi({
     }),
     getMessages: builder.query<Message[], string>({
       query: (chatId) => `${chatId}/messages`,
-      providesTags: (result, error, chatId) => [{ type: 'Message', id: chatId }],
+      providesTags: (result, error, chatId) => [
+        { type: 'Message', id: chatId },
+      ],
     }),
     sendMessage: builder.mutation<Message, SendMessageRequest>({
       query: ({ chatId, ...body }) => ({

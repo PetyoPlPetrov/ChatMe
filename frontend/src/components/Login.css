@@ -27,7 +27,13 @@
   font-weight: 600;
   color: #222222;
   margin: 0 0 8px 0;
-  font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+  font-family:
+    'Circular',
+    -apple-system,
+    BlinkMacSystemFont,
+    Roboto,
+    'Helvetica Neue',
+    sans-serif;
 }
 
 .login-header p {

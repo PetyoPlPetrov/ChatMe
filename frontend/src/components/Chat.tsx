@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { useGetMessagesQuery, useSendMessageMutation, Message } from '../store/api/chatApi';
+import {
+  useGetMessagesQuery,
+  useSendMessageMutation,
+  Message,
+} from '../store/api/chatApi';
 import { useGetUserByIdQuery } from '../store/api/usersApi';
 import { useNotifications } from '../hooks/useNotifications';
 import './Chat.css';
@@ -16,7 +20,11 @@ const Chat: React.FC<ChatProps> = ({ chatId, otherUserId }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
-  const { data: messages, isLoading: messagesLoading, refetch } = useGetMessagesQuery(chatId);
+  const {
+    data: messages,
+    isLoading: messagesLoading,
+    refetch,
+  } = useGetMessagesQuery(chatId);
   const { data: otherUser } = useGetUserByIdQuery(otherUserId);
   const [sendMessage, { isLoading: sendingMessage }] = useSendMessageMutation();
 
@@ -27,7 +35,7 @@ const Chat: React.FC<ChatProps> = ({ chatId, otherUserId }) => {
       if (payload.data.chatId === chatId) {
         refetch();
       }
-    }
+    },
   });
 
   const scrollToBottom = () => {
@@ -60,7 +68,7 @@ const Chat: React.FC<ChatProps> = ({ chatId, otherUserId }) => {
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -122,8 +130,10 @@ const Chat: React.FC<ChatProps> = ({ chatId, otherUserId }) => {
 
       <div className="chat-messages">
         {messages?.map((msg: Message, index: number) => {
-          const showDate = index === 0 ||
-            formatDate(messages[index - 1].timestamp) !== formatDate(msg.timestamp);
+          const showDate =
+            index === 0 ||
+            formatDate(messages[index - 1].timestamp) !==
+              formatDate(msg.timestamp);
 
           return (
             <React.Fragment key={msg.id}>
@@ -139,7 +149,9 @@ const Chat: React.FC<ChatProps> = ({ chatId, otherUserId }) => {
               >
                 <div className="message-content">
                   <p>{msg.content}</p>
-                  <span className="message-time">{formatTime(msg.timestamp)}</span>
+                  <span className="message-time">
+                    {formatTime(msg.timestamp)}
+                  </span>
                 </div>
               </div>
             </React.Fragment>
