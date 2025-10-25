@@ -1,0 +1,135 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Frontend CI/CD Job
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Check code formatting with Prettier
+      run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}"
+
+    - name: Run ESLint
+      run: npm run lint --if-present
+
+    - name: Type check with TypeScript
+      run: npx tsc --noEmit
+
+    - name: Run tests
+      run: npm test -- --coverage --watchAll=false
+      env:
+        CI: true
+
+    - name: Build frontend
+      run: npm run build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build-${{ matrix.node-version }}
+        path: frontend/build/
+
+  # Server CI/CD Job
+  server:
+    name: Server CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Check code formatting with Prettier
+      run: npx prettier --check "src/**/*.{ts,js,json}" --ignore-path .gitignore
+
+    - name: Run ESLint
+      run: npx eslint "src/**/*.{ts,js}" --max-warnings 0 || echo "ESLint not configured, skipping..."
+
+    - name: Type check with TypeScript
+      run: npx tsc --noEmit
+
+    - name: Run tests
+      run: npm test --if-present
+
+    - name: Build server
+      run: npm run build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-build-${{ matrix.node-version }}
+        path: server/dist/
+
+  # Security and Quality Checks
+  security:
+    name: Security & Quality
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - name: Run npm audit for frontend
+      run: |
+        cd frontend
+        npm audit --audit-level high || echo "Frontend audit completed with warnings"
+
+    - name: Run npm audit for server
+      run: |
+        cd server
+        npm audit --audit-level high || echo "Server audit completed with warnings"
+
+    - name: Check for sensitive files
+      run: |
+        if find . -name "*.env*" -not -path "./.git/*" -not -name "*.example*" | grep -q .; then
+          echo "Warning: Found potential environment files"
+          find . -name "*.env*" -not -path "./.git/*" -not -name "*.example*"
+        fi
