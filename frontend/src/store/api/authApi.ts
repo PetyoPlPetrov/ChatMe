@@ -15,7 +15,7 @@ export interface LoginResponse {
 const mockUsers: Record<string, { user: User; password: string }> = {
   'john@example.com': {
     user: { id: '1', email: 'john@example.com', name: 'John Doe', avatar: 'https://i.pravatar.cc/150?img=1' },
-    password: 'password'
+    password: 'Password123!'
   },
   'jane@example.com': {
     user: { id: '2', email: 'jane@example.com', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/150?img=2' },

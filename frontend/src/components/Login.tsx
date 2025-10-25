@@ -7,7 +7,7 @@ import './Login.css';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('john@example.com');
-  const [password, setPassword] = useState('password');
+  const [password, setPassword] = useState('Password123!');
   const [error, setError] = useState('');
 
   const [login, { isLoading }] = useLoginMutation();

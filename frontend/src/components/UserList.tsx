@@ -11,7 +11,6 @@ interface UserListProps {
 const UserList: React.FC<UserListProps> = ({ onSelectUser }) => {
   const { data: users, isLoading, error } = useGetUsersQuery();
   const [createChat] = useCreateChatMutation();
-    console.log({users, isLoading, error});
   const handleUserClick = async (userId: string) => {
     try {
       const chat = await createChat({ participantId: userId }).unwrap();
