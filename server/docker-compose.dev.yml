@@ -1,4 +1,33 @@
 services:
+  # ChatMe Nginx Gateway - Development Mode
+  chatme-nginx-dev:
+    image: nginx:alpine
+    container_name: chatme-nginx-dev
+    ports:
+      - "8080:80"
+    environment:
+      - ENVIRONMENT=development
+      - CORS_ORIGIN=http://localhost:3000
+    volumes:
+      # Mount nginx configuration files directly
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d/dev.conf:/etc/nginx/conf.d/dev.conf:ro
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/snippets/cors-dev.conf:/etc/nginx/snippets/cors-dev.conf:ro
+      - ./nginx/snippets/security-dev.conf:/etc/nginx/snippets/security-dev.conf:ro
+    depends_on:
+      - chatme-core-dev
+      - chatme-auth-dev
+    networks:
+      - chatme-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
   # ChatMe Core Service - Development Mode
   chatme-core-dev:
     build:
@@ -51,8 +80,8 @@ services:
       - ./auth/package-lock.json:/app/package-lock.json:ro
       - ./auth/tsconfig.json:/app/tsconfig.json:ro
       - ./auth/nodemon.json:/app/nodemon.json:ro
-      # Exclude node_modules to prevent conflicts
-      - /app/node_modules
+      # Mount node_modules from host to get all dependencies
+      - ./auth/node_modules:/app/node_modules:ro
     environment:
       - NODE_ENV=development
       - PORT=5001

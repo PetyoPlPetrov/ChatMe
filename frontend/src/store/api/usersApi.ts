@@ -1,9 +1,9 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { User } from '../slices/authSlice';
 
-// Base query with authentication
+// Base query with authentication via nginx gateway
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:5000/api',
+  baseUrl: 'http://localhost:8080/api',
   prepareHeaders: (headers, { getState }) => {
     // Add authentication token if available
     const state = getState() as any;

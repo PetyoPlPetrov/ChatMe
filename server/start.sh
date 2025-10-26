@@ -46,6 +46,7 @@ print_usage() {
     echo "Services:"
     print_color $CYAN "  core             User details service (port 5000)"
     print_color $CYAN "  auth             Authentication service (port 5001)"
+    print_color $CYAN "  nginx            Nginx reverse proxy gateway (port 8080)"
     print_color $CYAN "  all              All services (for Docker commands only)"
     echo
     echo "Options:"
@@ -161,6 +162,7 @@ start_docker_dev() {
 
     if [ "$service" = "all" ]; then
         print_color $GREEN "🐳 Starting all Docker development services..."
+        print_color $BLUE "📍 Nginx Gateway will be available at: http://localhost:8080"
         print_color $BLUE "📍 Core will be available at: http://localhost:5000"
         print_color $BLUE "📍 Auth will be available at: http://localhost:5001"
 
@@ -188,9 +190,11 @@ start_docker_dev() {
             port="5000"
         elif [ "$service" = "auth" ]; then
             port="5001"
+        elif [ "$service" = "nginx" ]; then
+            port="8080"
         else
             print_color $RED "❌ Unknown service: $service"
-            print_color $YELLOW "Available services: core, auth, all"
+            print_color $YELLOW "Available services: core, auth, nginx, all"
             exit 1
         fi
 
@@ -225,6 +229,7 @@ start_docker_prod() {
 
     if [ "$service" = "all" ]; then
         print_color $GREEN "🐳 Starting all Docker production services..."
+        print_color $BLUE "📍 Nginx Gateway will be available at: http://localhost:8080"
         print_color $BLUE "📍 Core will be available at: http://localhost:5000"
         print_color $BLUE "📍 Auth will be available at: http://localhost:5001"
 
@@ -252,9 +257,11 @@ start_docker_prod() {
             port="5000"
         elif [ "$service" = "auth" ]; then
             port="5001"
+        elif [ "$service" = "nginx" ]; then
+            port="8080"
         else
             print_color $RED "❌ Unknown service: $service"
-            print_color $YELLOW "Available services: core, auth, all"
+            print_color $YELLOW "Available services: core, auth, nginx, all"
             exit 1
         fi
 
@@ -294,7 +301,7 @@ while [[ $# -gt 0 ]]; do
             COMMAND="$1"
             shift
             ;;
-        core|auth|all)
+        core|auth|nginx|all)
             SERVICE="$1"
             shift
             ;;
@@ -422,6 +429,7 @@ case $COMMAND in
     "health")
         if [ -z "$SERVICE" ]; then
             print_color $BLUE "🏥 Checking health of all services..."
+            check_health "8080" # Nginx gateway
             check_health "5000" # Core service
             check_health "5001" # Auth service
         else
@@ -429,9 +437,11 @@ case $COMMAND in
                 check_health "${PORT:-5000}"
             elif [ "$SERVICE" = "auth" ]; then
                 check_health "${PORT:-5001}"
+            elif [ "$SERVICE" = "nginx" ]; then
+                check_health "${PORT:-8080}"
             else
                 print_color $RED "❌ Unknown service: $SERVICE"
-                print_color $YELLOW "Available services: core, auth"
+                print_color $YELLOW "Available services: core, auth, nginx"
                 exit 1
             fi
         fi
