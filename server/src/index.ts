@@ -8,7 +8,24 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(
   cors({
-    origin: ['http://localhost:3000'], // Frontend URL
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if origin matches localhost with port in range 3000-4000
+      const localhostPattern = /^http:\/\/localhost:([3-4][0-9]{3})$/;
+      const match = origin.match(localhostPattern);
+
+      if (match) {
+        const port = parseInt(match[1]);
+        if (port >= 3000 && port <= 4000) {
+          return callback(null, true);
+        }
+      }
+
+      // Reject other origins
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -74,10 +91,10 @@ app.use(
   }
 );
 
-// Start server
+// Start server with updated CORS
 app.listen(PORT, () => {
   console.log(`🚀 ChatMe Mock API Server running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`👥 Users endpoint: http://localhost:${PORT}/api/users`);
-  console.log(`🌐 CORS enabled for: http://localhost:3000`);
+  console.log(`🌐 CORS enabled for: http://localhost:3000-4000`);
 });

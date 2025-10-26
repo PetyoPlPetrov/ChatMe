@@ -28,15 +28,15 @@ const Chat: React.FC<ChatProps> = ({ chatId, otherUserId }) => {
   const { data: otherUser } = useGetUserByIdQuery(otherUserId);
   const [sendMessage, { isLoading: sendingMessage }] = useSendMessageMutation();
 
-  // SSE notifications integration
-  useNotifications({
-    onChatMessage: (payload) => {
-      // Only refetch if the message is for the current chat
-      if (payload.data.chatId === chatId) {
-        refetch();
-      }
-    },
-  });
+  // // SSE notifications integration
+  // useNotifications({
+  //   onChatMessage: (payload) => {
+  //     // Only refetch if the message is for the current chat
+  //     if (payload.data.chatId === chatId) {
+  //       refetch();
+  //     }
+  //   },
+  // });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

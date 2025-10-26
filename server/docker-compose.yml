@@ -1,0 +1,86 @@
+services:
+  # ChatMe Server - Development Mode
+  chatme-server-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        - NODE_ENV=development
+    container_name: chatme-server-dev
+    ports:
+      - "5000:5000"
+      - "9229:9229"  # Node.js debugger port
+    volumes:
+      # Mount source code for hot-reloading (read-only to prevent container from modifying host)
+      - ./src:/app/src:ro
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./nodemon.json:/app/nodemon.json:ro
+      # Exclude node_modules to prevent conflicts
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - LOG_LEVEL=debug
+    networks:
+      - chatme-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    profiles:
+      - development
+
+  # ChatMe Server - Production Mode
+  chatme-server-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    container_name: chatme-server-prod
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    networks:
+      - chatme-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    profiles:
+      - production
+
+networks:
+  chatme-network:
+    driver: bridge
+    name: chatme-network
+
+volumes:
+  # Volume for node_modules to persist dependencies
+  chatme-server-node-modules:
+    name: chatme-server-node-modules
