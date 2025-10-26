@@ -1,6 +1,13 @@
 # Docker Setup for ChatMe
 
-This document explains how to use Docker and Docker Compose to run the ChatMe server with hot-reloading for development.
+This document explains how to use Docker and Docker Compose to run the ChatMe microservices with hot-reloading for development.
+
+## Architecture Overview
+
+ChatMe uses a microservices architecture with two main services:
+
+- **Core Service** - Handles user details and main application logic (port 5000)
+- **Auth Service** - Handles authentication and authorization (port 5001)
 
 ## Prerequisites
 
@@ -11,21 +18,27 @@ This document explains how to use Docker and Docker Compose to run the ChatMe se
 
 ### Development Mode (Hot-Reloading)
 
-Start the development server with automatic rebuilding on file changes:
+Start the development services with automatic rebuilding on file changes:
 
 ```bash
-# Start development server
-docker-compose --profile development up chatme-server-dev
+# Start all development services
+docker-compose --profile development up
+
+# Start specific service
+docker-compose --profile development up chatme-core-dev
+docker-compose --profile development up chatme-auth-dev
 
 # Start in background (detached mode)
-docker-compose --profile development up -d chatme-server-dev
+docker-compose --profile development up -d
 
 # View logs
-docker-compose logs -f chatme-server-dev
+docker-compose logs -f
+docker-compose logs -f chatme-core-dev
+docker-compose logs -f chatme-auth-dev
 ```
 
-The development server will:
-- ✅ Auto-reload on code changes in `./server/src/`
+The development services will:
+- ✅ Auto-reload on code changes in `./core/src/` and `./auth/src/`
 - ✅ Mount source files as volumes
 - ✅ Run with nodemon for instant restarts
 - ✅ Enable debug logging
@@ -36,19 +49,25 @@ The development server will:
 Run the optimized production build:
 
 ```bash
-# Start production server
-docker-compose --profile production up chatme-server-prod
+# Start all production services
+docker-compose --profile production up
+
+# Start specific service
+docker-compose --profile production up chatme-core-prod
+docker-compose --profile production up chatme-auth-prod
 
 # Start in background
-docker-compose --profile production up -d chatme-server-prod
+docker-compose --profile production up -d
 ```
 
 ## Available Services
 
 | Service | Port | Description |
 |---------|------|-------------|
-| `chatme-server-dev` | 5000 | Development server with hot-reloading |
-| `chatme-server-prod` | 5000 | Production-optimized server |
+| `chatme-core-dev` | 5000 | Core development server with hot-reloading |
+| `chatme-auth-dev` | 5001 | Auth development server with hot-reloading |
+| `chatme-core-prod` | 5000 | Core production-optimized server |
+| `chatme-auth-prod` | 5001 | Auth production-optimized server |
 
 ## Docker Compose Commands
 

@@ -1,6 +1,13 @@
 # ChatMe Server Start Scripts
 
-This directory contains convenient start scripts to run the ChatMe server in different modes.
+This directory contains convenient start scripts to run the ChatMe microservices in different modes.
+
+## Architecture Overview
+
+ChatMe now uses a microservices architecture with two main services:
+
+- **Core Service** (`core/`) - Handles user details and main application logic (port 5000)
+- **Auth Service** (`auth/`) - Handles authentication and authorization (port 5001)
 
 ## Available Scripts
 
@@ -23,57 +30,91 @@ start.bat help
 
 ### Development Mode
 ```bash
-# Start with nodemon hot-reload (recommended for development)
-./start.sh dev
+# Start core service with nodemon hot-reload
+./start.sh dev core
 
-# Start on different port
-./start.sh dev --port 3001
+# Start auth service with nodemon hot-reload
+./start.sh dev auth
+
+# Start core service on different port
+./start.sh dev core --port 3001
+
+# Start auth service on different port
+./start.sh dev auth --port 3002
 ```
 
 ### Production Mode
 ```bash
-# Build and start in production mode
-./start.sh prod
+# Build and start core service in production mode
+./start.sh prod core
 
-# Start on different port
-./start.sh prod --port 8080
+# Build and start auth service in production mode
+./start.sh prod auth
+
+# Start core service on different port
+./start.sh prod core --port 8080
+
+# Start auth service on different port
+./start.sh prod auth --port 8081
 ```
 
 ### Docker Mode
 ```bash
-# Development with Docker (hot-reload)
-./start.sh docker:dev
+# Start all services in development mode with Docker
+./start.sh docker:dev all
 
-# Development with Docker in background
-./start.sh docker:dev --detached
+# Start only core service in development mode
+./start.sh docker:dev core
 
-# Follow logs of detached container
-./start.sh docker:dev --detached --logs
+# Start only auth service in development mode
+./start.sh docker:dev auth
 
-# Production with Docker
-./start.sh docker:prod
+# Start all services in background mode
+./start.sh docker:dev all --detached
 
-# Production with Docker in background
-./start.sh docker:prod --detached
+# Follow logs of all detached containers
+./start.sh docker:dev all --detached --logs
+
+# Start all services in production mode with Docker
+./start.sh docker:prod all
+
+# Start specific service in production mode
+./start.sh docker:prod core --detached
 ```
 
 ### Utility Commands
 ```bash
-# Build TypeScript
+# Build all services
 ./start.sh build
 
-# Clean build directory
+# Build specific service
+./start.sh build core
+./start.sh build auth
+
+# Clean all services
 ./start.sh clean
 
-# Format code with Prettier
+# Clean specific service
+./start.sh clean core
+
+# Format code for all services
 ./start.sh format
 
-# Install dependencies
+# Format code for specific service
+./start.sh format core
+
+# Install dependencies for all services
 ./start.sh install
 
-# Check server health (if running)
+# Install dependencies for specific service
+./start.sh install core
+
+# Check health of all services
 ./start.sh health
-./start.sh health --port 3001
+
+# Check health of specific service
+./start.sh health core
+./start.sh health auth --port 3001
 ```
 
 ## Features

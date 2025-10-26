@@ -1,0 +1,78 @@
+services:
+  # ChatMe Core Service - Development Mode
+  chatme-core-dev:
+    build:
+      context: ./core
+      dockerfile: Dockerfile.dev
+      args:
+        - NODE_ENV=development
+    container_name: chatme-core-dev
+    ports:
+      - "5000:5000"
+      - "9229:9229"  # Node.js debugger port
+    volumes:
+      # Mount source code for hot-reloading (read-only to prevent container from modifying host)
+      - ./core/src:/app/src:ro
+      - ./core/package.json:/app/package.json:ro
+      - ./core/package-lock.json:/app/package-lock.json:ro
+      - ./core/tsconfig.json:/app/tsconfig.json:ro
+      - ./core/nodemon.json:/app/nodemon.json:ro
+      # Exclude node_modules to prevent conflicts
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - LOG_LEVEL=debug
+    networks:
+      - chatme-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  # ChatMe Auth Service - Development Mode
+  chatme-auth-dev:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile.dev
+      args:
+        - NODE_ENV=development
+    container_name: chatme-auth-dev
+    ports:
+      - "5001:5001"
+      - "9230:9229"  # Node.js debugger port (different from core)
+    volumes:
+      # Mount source code for hot-reloading (read-only to prevent container from modifying host)
+      - ./auth/src:/app/src:ro
+      - ./auth/package.json:/app/package.json:ro
+      - ./auth/package-lock.json:/app/package-lock.json:ro
+      - ./auth/tsconfig.json:/app/tsconfig.json:ro
+      - ./auth/nodemon.json:/app/nodemon.json:ro
+      # Exclude node_modules to prevent conflicts
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5001
+      - LOG_LEVEL=debug
+    networks:
+      - chatme-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+networks:
+  chatme-network:
+    driver: bridge
+    name: chatme-network
+
+volumes:
+  # Volume for node_modules to persist dependencies
+  chatme-server-node-modules:
+    name: chatme-server-node-modules
