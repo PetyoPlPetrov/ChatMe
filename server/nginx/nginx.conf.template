@@ -1,0 +1,230 @@
+# This file is processed by nginx envsubst and placed in /etc/nginx/conf.d/
+# It should only contain directives valid in the http context
+
+# Environment-specific upstream definitions
+upstream auth_service {
+    server ${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}${UPSTREAM_OPTIONS};
+    ${DEV_BACKUP_SERVER}
+    ${KEEPALIVE_CONFIG}
+}
+
+upstream core_service {
+    server ${CORE_SERVICE_HOST}:${CORE_SERVICE_PORT}${UPSTREAM_OPTIONS};
+    ${DEV_BACKUP_SERVER_CORE}
+    ${KEEPALIVE_CONFIG}
+}
+
+# Environment-specific rate limiting
+limit_req_zone $binary_remote_addr zone=api:10m rate=${API_RATE_LIMIT};
+limit_req_zone $binary_remote_addr zone=auth:10m rate=${AUTH_RATE_LIMIT};
+${PROD_RATE_LIMITING_ZONES}
+
+# Production-only connection limiting
+${PROD_CONNECTION_ZONES}
+
+# Environment mapping
+map $request_uri $environment {
+    default "${ENVIRONMENT}";
+}
+
+# Environment-specific logging format
+log_format ${LOG_FORMAT} '${LOG_PATTERN}';
+
+# Production-only caching configuration
+${PROD_CACHE_CONFIG}
+
+# Logging
+access_log /var/log/nginx/access.log ${LOG_FORMAT};
+error_log /var/log/nginx/error.log;
+
+server {
+    listen 80;
+    server_name localhost;
+
+    # Production-only global settings
+    ${PROD_CONNECTION_LIMITS}
+    ${PROD_BUFFER_SETTINGS}
+
+    # Enable gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript application/x-font-ttf font/opentype image/svg+xml image/x-icon;
+
+    # Health check endpoint (no auth required)
+    location /health {
+        access_log off;
+        return 200 '{"status":"healthy","service":"chatme-nginx-gateway","timestamp":"$time_iso8601","environment":"$environment"}';
+        add_header Content-Type application/json;
+        # CORS headers
+        add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+        add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+        add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        # Security headers
+        add_header X-Frame-Options ${X_FRAME_OPTIONS};
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+        add_header Content-Security-Policy "${CSP_POLICY}" always;
+        ${HSTS_HEADER}
+        add_header Referrer-Policy "${REFERRER_POLICY}" always;
+        ${PROD_ADDITIONAL_SECURITY_HEADERS}
+    }
+
+    # Authentication endpoints (direct to auth service)
+    location /api/auth/ {
+        # Handle preflight OPTIONS requests
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Max-Age 3600;
+            add_header Content-Type text/plain;
+            add_header Content-Length 0;
+            # CORS headers for preflight
+            add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+            add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+            add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+            add_header Access-Control-Allow-Credentials "true" always;
+            return 204;
+        }
+
+        # Rate limiting
+        limit_req zone=auth burst=${AUTH_BURST} nodelay;
+        ${PROD_AUTH_RATE_LIMITING}
+
+        # CORS headers for all responses
+        add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+        add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+        add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+
+        proxy_pass http://auth_service;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Environment-specific timeout and buffer settings
+        proxy_connect_timeout ${AUTH_CONNECT_TIMEOUT};
+        proxy_send_timeout ${AUTH_SEND_TIMEOUT};
+        proxy_read_timeout ${AUTH_READ_TIMEOUT};
+        ${PROD_AUTH_BUFFER_SETTINGS}
+        ${PROD_AUTH_KEEPALIVE}
+    }
+
+    # Internal auth endpoint for nginx auth_request
+    location = /auth {
+        internal;
+        proxy_pass http://auth_service/api/auth/verify;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Original-Method $request_method;
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    # Protected API endpoints (require authentication)
+    location /api/ {
+        # Handle preflight OPTIONS requests
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Max-Age 3600;
+            add_header Content-Type text/plain;
+            add_header Content-Length 0;
+            # CORS headers for preflight
+            add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+            add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+            add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+            add_header Access-Control-Allow-Credentials "true" always;
+            return 204;
+        }
+
+        # Rate limiting
+        limit_req zone=api burst=${API_BURST} nodelay;
+        ${PROD_API_RATE_LIMITING}
+
+        # CORS headers for all responses
+        add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+        add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+        add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+
+        # Auth verification
+        auth_request /auth;
+
+        # Forward user info from auth response
+        auth_request_set $user_email $upstream_http_x_user_email;
+        auth_request_set $user_id $upstream_http_x_user_id;
+
+        # Proxy to core service
+        proxy_pass http://core_service;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-User-Email $user_email;
+        proxy_set_header X-User-ID $user_id;
+
+        # Environment-specific timeout and buffer settings
+        proxy_connect_timeout ${API_CONNECT_TIMEOUT};
+        proxy_send_timeout ${API_SEND_TIMEOUT};
+        proxy_read_timeout ${API_READ_TIMEOUT};
+        ${PROD_API_BUFFER_SETTINGS}
+        ${PROD_API_KEEPALIVE}
+    }
+
+    # Static files or frontend (if needed later)
+    location / {
+        # For now, return a simple message
+        return 200 '{"message":"ChatMe API Gateway","environment":"$environment","endpoints":["/api/auth/login","/api/auth/logout","/api/users","/health"]}';
+        add_header Content-Type application/json;
+        # CORS headers
+        add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+        add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+        add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+    }
+
+    # Error pages
+    error_page 401 = @error401;
+    error_page 403 = @error403;
+    error_page 404 = @error404;
+    error_page 500 502 503 504 = @error50x;
+
+    location @error401 {
+        return 401 '{"error":"Unauthorized","message":"Authentication required"}';
+        add_header Content-Type application/json;
+        # CORS headers
+        add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+        add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+        add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+    }
+
+    location @error403 {
+        return 403 '{"error":"Forbidden","message":"Access denied"}';
+        add_header Content-Type application/json;
+        # CORS headers
+        add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+        add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+        add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+    }
+
+    location @error404 {
+        return 404 '{"error":"Not Found","message":"Endpoint not found"}';
+        add_header Content-Type application/json;
+        # CORS headers
+        add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+        add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+        add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+    }
+
+    location @error50x {
+        return 500 '{"error":"Internal Server Error","message":"Service temporarily unavailable"}';
+        add_header Content-Type application/json;
+        # CORS headers
+        add_header Access-Control-Allow-Origin "${CORS_ORIGIN}" always;
+        add_header Access-Control-Allow-Methods "${CORS_METHODS}" always;
+        add_header Access-Control-Allow-Headers "${CORS_HEADERS}" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+    }
+}

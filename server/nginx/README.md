@@ -1,92 +1,65 @@
-# Nginx Configuration Structure
+# Nginx Configuration - envsubst Template Approach
 
-This directory contains the nginx reverse proxy configuration for the ChatMe application using an include pattern for environment-specific settings.
+## Overview
+The nginx configuration uses a **template-based approach** with environment variable substitution (envsubst) to handle development and production differences in a single template file.
 
-## Directory Structure
-
-```
-nginx/
-├── nginx.conf              # Base configuration (shared across environments)
-├── conf.d/
-│   ├── dev.conf            # Development-specific overrides
-│   └── prod.conf           # Production-specific overrides
-└── snippets/
-    ├── cors-dev.conf       # Development CORS settings
-    ├── cors-prod.conf      # Production CORS settings
-    ├── security-dev.conf   # Development security headers
-    └── security-prod.conf  # Production security headers
-```
+## Files
+- `nginx.conf` - Base nginx configuration with events and http blocks
+- `nginx.conf.template` - Master template with environment variable placeholders
 
 ## How It Works
+1. **Docker startup**: nginx:alpine processes `/etc/nginx/templates/*.template` files
+2. **envsubst**: Replaces `${VARIABLE}` placeholders with environment variable values
+3. **Output**: Generated config saved to `/etc/nginx/conf.d/nginx.conf`
+4. **Include**: Base `nginx.conf` includes all files from `/etc/nginx/conf.d/`
 
-1. **Base Configuration**: `nginx.conf` contains shared settings like routing, health checks, and error handling
-2. **Environment Overrides**: Files in `conf.d/` provide environment-specific settings like upstream definitions, rate limiting, and timeouts
-3. **Reusable Snippets**: Files in `snippets/` contain modular configuration blocks for CORS and security headers
+## Environment Variables
+The template uses 40+ environment variables to customize:
+- **Service endpoints**: `${AUTH_SERVICE_HOST}`, `${CORE_SERVICE_HOST}`
+- **Rate limiting**: `${API_RATE_LIMIT}`, `${AUTH_RATE_LIMIT}`
+- **CORS settings**: `${CORS_ORIGIN}`, `${CORS_METHODS}`
+- **Security headers**: `${CSP_POLICY}`, `${X_FRAME_OPTIONS}`
+- **Timeouts**: `${AUTH_CONNECT_TIMEOUT}`, `${API_READ_TIMEOUT}`
+- **Production features**: `${PROD_CACHE_CONFIG}`, `${PROD_BUFFER_SETTINGS}`
 
-## Environment Differences
-
-### Development (`dev.conf`)
-- **CORS**: Permissive, allows multiple localhost ports (3000, 3001, 3004, 4000, etc.)
-- **Rate Limiting**: Very relaxed (100 req/s)
-- **Timeouts**: Shorter for faster feedback
-- **Error Messages**: Verbose with debugging hints
-- **Upstream**: Uses `chatme-*-dev` container names with localhost fallbacks
-
-### Production (`prod.conf`)
-- **CORS**: Strict, only configured production domains
-- **Rate Limiting**: Conservative (10 req/s with burst limits)
-- **Timeouts**: Longer for stability
-- **Error Messages**: Minimal information disclosure
-- **Upstream**: Uses `chatme-*-prod` container names with health checks
-- **Additional Features**: Connection pooling, caching support, stricter security
-
-## Usage
-
-The appropriate configuration files are automatically built into custom Docker images:
-
-### Development
-```bash
-./server/start.sh docker:dev all
-```
-Builds custom nginx image with: `nginx.conf`, `dev.conf`, `cors-dev.conf`, `security-dev.conf`
-
-### Production
-```bash
-./server/start.sh docker:prod all
-```
-Builds custom nginx image with: `nginx.conf`, `prod.conf`, `cors-prod.conf`, `security-prod.conf`
-
-## Docker Images
-
-### Development Image (`Dockerfile.dev`)
-- Removes default nginx configuration
-- Copies development-specific configuration files
-- Optimized for local development with hot-reload support
-
-### Production Image (`Dockerfile`)
-- Removes default nginx configuration
-- Copies production-specific configuration files
-- Optimized for production deployment with security hardening
-
-## Customization
-
-### Adding New Routes
-1. Edit `nginx.conf` for routes that apply to all environments
-2. Edit `conf.d/dev.conf` or `conf.d/prod.conf` for environment-specific routing
-
-### Updating CORS
-1. Edit `snippets/cors-dev.conf` for development CORS settings
-2. Edit `snippets/cors-prod.conf` for production CORS settings
-3. Update the `CORS_ORIGIN` environment variable in docker-compose files
-
-### Modifying Security Headers
-1. Edit `snippets/security-dev.conf` for development security headers
-2. Edit `snippets/security-prod.conf` for production security headers
+See `docker-compose.dev.yml` and `docker-compose.prod.yml` for complete variable definitions.
 
 ## Benefits
+✅ **Single source of truth** - One template instead of 5+ separate files
+✅ **No file mounting complexity** - Just 3 volume mounts total
+✅ **Environment consistency** - Same template, different variables
+✅ **Easy maintenance** - Modify variables instead of multiple config files
+✅ **Proper CORS handling** - Headers defined once per location block
 
-- **Clean Separation**: Development and production settings are clearly separated
-- **Maintainable**: Shared configuration reduces duplication
-- **Flexible**: Easy to customize per environment without affecting others
-- **Secure**: Production-specific security hardening
-- **Developer-Friendly**: Development settings optimized for local development
+## Development vs Production
+**Development:**
+- Permissive CORS (`http://localhost:3004`)
+- High rate limits (`100r/s`)
+- Relaxed security headers
+- Backup upstream servers
+- Verbose logging
+
+**Production:**
+- Strict CORS (domain validation)
+- Low rate limits (`10r/s`)
+- Security headers (HSTS, CSP)
+- Connection pooling & keepalive
+- Structured logging with minimal PII
+
+## Rollback Using Git
+If you need to revert to the previous multi-file approach:
+
+```bash
+# Check git history for the commit before envsubst migration
+git log --oneline server/nginx/
+
+# Revert to previous approach (replace COMMIT_HASH)
+git checkout COMMIT_HASH -- server/nginx/
+git checkout COMMIT_HASH -- server/docker-compose.dev.yml
+git checkout COMMIT_HASH -- server/docker-compose.prod.yml
+
+# Or create a revert commit
+git revert COMMIT_HASH
+```
+
+No temporary backup files needed - git history is the source of truth!
