@@ -19,10 +19,8 @@ const Chat: React.FC<ChatProps> = ({ chatId, otherUserId }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
-  const {
-    data: messages,
-    isLoading: messagesLoading,
-  } = useGetMessagesQuery(chatId);
+  const { data: messages, isLoading: messagesLoading } =
+    useGetMessagesQuery(chatId);
   const { data: otherUser } = useGetUserByIdQuery(otherUserId);
   const [sendMessage, { isLoading: sendingMessage }] = useSendMessageMutation();
 
