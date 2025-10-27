@@ -144,12 +144,7 @@ export const useNotifications = ({
         }
       }, 5000);
     };
-  }, [
-    currentUser?.id,
-    onChatMessage,
-    onMessageRead,
-    onMatchNotification,
-  ]);
+  }, [currentUser?.id, onChatMessage, onMessageRead, onMatchNotification]);
 
   const disconnect = useCallback(() => {
     if (eventSourceRef.current) {
