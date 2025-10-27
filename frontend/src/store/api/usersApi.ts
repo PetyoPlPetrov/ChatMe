@@ -4,15 +4,10 @@ import { User } from '../slices/authSlice';
 // Base query with authentication via nginx gateway
 const baseQuery = fetchBaseQuery({
   baseUrl: 'http://localhost:8080/api',
-  prepareHeaders: (headers, { getState }) => {
-    // Add authentication token if available
-    const state = getState() as any;
-    const token = state.auth.token;
-
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
-
+  credentials: 'include', // Include cookies for authentication
+  prepareHeaders: (headers) => {
+    // Authentication is now handled automatically via httpOnly cookies
+    // No need to manually set Authorization headers
     return headers;
   },
 });

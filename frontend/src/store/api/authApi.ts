@@ -8,7 +8,6 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   user: User;
-  token: string;
   success: boolean;
   message: string;
 }
@@ -16,6 +15,7 @@ export interface LoginResponse {
 // Base query that points to nginx gateway
 const baseQuery = fetchBaseQuery({
   baseUrl: 'http://localhost:8080/api/auth',
+  credentials: 'include', // Include cookies in requests
   prepareHeaders: (headers) => {
     headers.set('Content-Type', 'application/json');
     return headers;
@@ -33,7 +33,8 @@ export const authApi = createApi({
         body: credentials,
       }),
       transformResponse: (response: any) => {
-        // The auth service returns { success, message, user: { id, email, name }, token }
+        // The auth service returns { success, message, user: { id, email, name } }
+        // Token is now set as httpOnly cookie and not returned in response
         return {
           success: response.success,
           message: response.message,
@@ -43,7 +44,6 @@ export const authApi = createApi({
             name: response.user.name,
             avatar: `https://i.pravatar.cc/150?u=${response.user.email}`, // Generate avatar
           },
-          token: response.token,
         };
       },
     }),

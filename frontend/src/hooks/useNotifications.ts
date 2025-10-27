@@ -69,10 +69,9 @@ export const useNotifications = ({
 }: UseNotificationsProps = {}) => {
   const eventSourceRef = useRef<EventSource | null>(null);
   const currentUser = useSelector((state: RootState) => state.auth.user);
-  const token = useSelector((state: RootState) => state.auth.token);
 
   const connect = useCallback(() => {
-    if (!currentUser?.id || !token) {
+    if (!currentUser?.id) {
       console.log(
         'No user logged in or no token available, skipping SSE connection'
       );
@@ -86,7 +85,7 @@ export const useNotifications = ({
 
     // Create new SSE connection with token as query parameter
     const eventSource = new EventSource(
-      `http://localhost:8080/api/notifications/sse/${currentUser.id}?token=${encodeURIComponent(token)}`
+      `http://localhost:8080/api/notifications/sse/${currentUser.id}`
     );
     eventSourceRef.current = eventSource;
 
@@ -147,7 +146,6 @@ export const useNotifications = ({
     };
   }, [
     currentUser?.id,
-    token,
     onChatMessage,
     onMessageRead,
     onMatchNotification,
@@ -162,7 +160,7 @@ export const useNotifications = ({
   }, []);
 
   useEffect(() => {
-    if (currentUser?.id && token) {
+    if (currentUser?.id) {
       connect();
     } else {
       disconnect();
@@ -172,7 +170,7 @@ export const useNotifications = ({
     return () => {
       disconnect();
     };
-  }, [currentUser?.id, token, connect, disconnect]);
+  }, [currentUser?.id, connect, disconnect]);
 
   return {
     isConnected: eventSourceRef.current?.readyState === EventSource.OPEN,

@@ -20,7 +20,7 @@ const Login: React.FC = () => {
 
     try {
       const result = await login({ email, password }).unwrap();
-      dispatch(setCredentials(result));
+      dispatch(setCredentials({ user: result.user }));
       navigate('/chat');
     } catch (err: any) {
       setError(err.data?.message || 'Login failed');

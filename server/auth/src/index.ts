@@ -1,5 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -17,6 +18,7 @@ const mockUsers = [
 // Middleware
 // CORS removed - handled by nginx gateway
 app.use(express.json());
+app.use(cookieParser());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -61,6 +63,14 @@ console.log('Login attempt for email:', email);
     { expiresIn: '24h' }
   );
 
+  // Set JWT in httpOnly cookie
+  res.cookie('authToken', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    sameSite: 'lax', // CSRF protection
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+  });
+
   res.json({
     success: true,
     message: 'Authentication successful',
@@ -69,12 +79,18 @@ console.log('Login attempt for email:', email);
       email: user.email,
       name: user.name,
     },
-    token,
+    // Token no longer returned in response body for security
   });
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  // For now, always return success
+  // Clear the authentication cookie
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+
   res.json({
     success: true,
     message: 'Logout successful',
@@ -83,21 +99,24 @@ app.post('/api/auth/logout', (req, res) => {
 
 // Auth verification endpoint for nginx auth_request
 app.get('/api/auth/verify', (req, res) => {
-  const authorization = req.headers.authorization;
-console.log("Authorization in verify:", authorization);
-  if (!authorization) {
-    return res.status(401).json({
-      success: false,
-      message: 'No authorization header provided',
-    });
-  }
+  // Try to get token from cookie first (new method)
+  let token = req.cookies?.authToken;
 
-  const token = authorization.replace('Bearer ', '');
+  // Fallback to Authorization header for backward compatibility during transition
+  if (!token) {
+    const authorization = req.headers.authorization;
+    console.log("No cookie found, checking Authorization header:", authorization);
+    if (authorization) {
+      token = authorization.replace('Bearer ', '');
+    }
+  } else {
+    console.log("Found token in cookie");
+  }
 
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'No token provided',
+      message: 'No authentication token provided',
     });
   }
 
