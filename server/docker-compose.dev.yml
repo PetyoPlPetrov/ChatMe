@@ -8,6 +8,7 @@ services:
     environment:
       # Core service configuration
       - ENVIRONMENT=development
+      - SERVER_NAME=localhost
       - AUTH_SERVICE_HOST=chatme-auth-dev
       - AUTH_SERVICE_PORT=5001
       - CORE_SERVICE_HOST=chatme-core-dev
@@ -23,7 +24,7 @@ services:
       - API_BURST=20
       - AUTH_BURST=10
       # CORS configuration
-      - CORS_ORIGIN=http://localhost:3004
+      - CORS_ORIGIN=http://localhost:3000
       - CORS_METHODS=GET, POST, PUT, DELETE, OPTIONS, PATCH
       - CORS_HEADERS=Authorization, Content-Type, Accept, Origin, X-Requested-With, X-Custom-Header
       # Security headers (development - relaxed)

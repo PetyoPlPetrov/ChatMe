@@ -8,6 +8,7 @@ services:
     environment:
       # Core service configuration
       - ENVIRONMENT=production
+      - SERVER_NAME=chatme.com
       - AUTH_SERVICE_HOST=chatme-auth-prod
       - AUTH_SERVICE_PORT=5001
       - CORE_SERVICE_HOST=chatme-core-prod
@@ -23,7 +24,7 @@ services:
       - API_BURST=5
       - AUTH_BURST=3
       # CORS configuration (production domains)
-      - CORS_ORIGIN=https://chatme.example.com
+      - CORS_ORIGIN=https://chatme.com
       - CORS_METHODS=GET, POST, PUT, DELETE, OPTIONS
       - CORS_HEADERS=Authorization, Content-Type, Accept, Origin, X-Requested-With
       # Security headers (production - strict)

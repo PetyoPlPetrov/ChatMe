@@ -168,20 +168,20 @@ start_docker_dev() {
 
         if [ "$detached" = true ]; then
             print_color $YELLOW "🔄 Starting in background mode..."
-            docker-compose -f docker-compose.dev.yml up -d
+            docker-compose -f "$(dirname "$0")/docker-compose.dev.yml" up -d
             print_color $GREEN "✅ All containers started in background"
             print_color $BLUE "💡 Use './start.sh docker:dev all --logs' to view logs"
-            print_color $BLUE "💡 Use 'docker-compose -f docker-compose.dev.yml down' to stop"
+            print_color $BLUE "💡 Use 'docker-compose -f $(dirname "$0")/docker-compose.dev.yml down' to stop"
         else
             print_color $YELLOW "💡 Press Ctrl+C to stop"
             echo
-            docker-compose -f docker-compose.dev.yml up
+            docker-compose -f "$(dirname "$0")/docker-compose.dev.yml" up
         fi
 
         if [ "$follow_logs" = true ] && [ "$detached" = true ]; then
             echo
             print_color $BLUE "📋 Following container logs..."
-            docker-compose -f docker-compose.dev.yml logs -f
+            docker-compose -f "$(dirname "$0")/docker-compose.dev.yml" logs -f
         fi
     else
         local container_name="chatme-${service}-dev"
@@ -203,20 +203,20 @@ start_docker_dev() {
 
         if [ "$detached" = true ]; then
             print_color $YELLOW "🔄 Starting in background mode..."
-            docker-compose -f docker-compose.dev.yml up -d "$container_name"
+            docker-compose -f "$(dirname "$0")/docker-compose.dev.yml" up -d "$container_name"
             print_color $GREEN "✅ Container started in background"
             print_color $BLUE "💡 Use './start.sh docker:dev $service --logs' to view logs"
-            print_color $BLUE "💡 Use 'docker-compose -f docker-compose.dev.yml down' to stop"
+            print_color $BLUE "💡 Use 'docker-compose -f $(dirname "$0")/docker-compose.dev.yml down' to stop"
         else
             print_color $YELLOW "💡 Press Ctrl+C to stop"
             echo
-            docker-compose -f docker-compose.dev.yml up "$container_name"
+            docker-compose -f "$(dirname "$0")/docker-compose.dev.yml" up "$container_name"
         fi
 
         if [ "$follow_logs" = true ] && [ "$detached" = true ]; then
             echo
             print_color $BLUE "📋 Following container logs..."
-            docker-compose -f docker-compose.dev.yml logs -f "$container_name"
+            docker-compose -f "$(dirname "$0")/docker-compose.dev.yml" logs -f "$container_name"
         fi
     fi
 }
@@ -235,20 +235,20 @@ start_docker_prod() {
 
         if [ "$detached" = true ]; then
             print_color $YELLOW "🔄 Starting in background mode..."
-            docker-compose -f docker-compose.prod.yml up -d
+            docker-compose -f "$(dirname "$0")/docker-compose.prod.yml" up -d
             print_color $GREEN "✅ All containers started in background"
             print_color $BLUE "💡 Use './start.sh docker:prod all --logs' to view logs"
-            print_color $BLUE "💡 Use 'docker-compose -f docker-compose.prod.yml down' to stop"
+            print_color $BLUE "💡 Use 'docker-compose -f $(dirname "$0")/docker-compose.prod.yml down' to stop"
         else
             print_color $YELLOW "💡 Press Ctrl+C to stop"
             echo
-            docker-compose -f docker-compose.prod.yml up
+            docker-compose -f "$(dirname "$0")/docker-compose.prod.yml" up
         fi
 
         if [ "$follow_logs" = true ] && [ "$detached" = true ]; then
             echo
             print_color $BLUE "📋 Following container logs..."
-            docker-compose -f docker-compose.prod.yml logs -f
+            docker-compose -f "$(dirname "$0")/docker-compose.prod.yml" logs -f
         fi
     else
         local container_name="chatme-${service}-prod"
@@ -270,20 +270,20 @@ start_docker_prod() {
 
         if [ "$detached" = true ]; then
             print_color $YELLOW "🔄 Starting in background mode..."
-            docker-compose -f docker-compose.prod.yml up -d "$container_name"
+            docker-compose -f "$(dirname "$0")/docker-compose.prod.yml" up -d "$container_name"
             print_color $GREEN "✅ Container started in background"
             print_color $BLUE "💡 Use './start.sh docker:prod $service --logs' to view logs"
-            print_color $BLUE "💡 Use 'docker-compose -f docker-compose.prod.yml down' to stop"
+            print_color $BLUE "💡 Use 'docker-compose -f $(dirname "$0")/docker-compose.prod.yml down' to stop"
         else
             print_color $YELLOW "💡 Press Ctrl+C to stop"
             echo
-            docker-compose -f docker-compose.prod.yml up "$container_name"
+            docker-compose -f "$(dirname "$0")/docker-compose.prod.yml" up "$container_name"
         fi
 
         if [ "$follow_logs" = true ] && [ "$detached" = true ]; then
             echo
             print_color $BLUE "📋 Following container logs..."
-            docker-compose -f docker-compose.prod.yml logs -f "$container_name"
+            docker-compose -f "$(dirname "$0")/docker-compose.prod.yml" logs -f "$container_name"
         fi
     fi
 }
