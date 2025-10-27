@@ -10,9 +10,24 @@ const JWT_SECRET = process.env.JWT_SECRET || 'chatme-secret-key-dev';
 
 // Mock user database (in production, this would be a real database)
 const mockUsers = [
-  { id: '1', email: 'john@example.com', password: 'Password123!', name: 'John Doe' },
-  { id: '2', email: 'jane@example.com', password: 'Password123!', name: 'Jane Smith' },
-  { id: '3', email: 'admin@example.com', password: 'admin123', name: 'Admin User' },
+  {
+    id: '1',
+    email: 'john@example.com',
+    password: 'Password123!',
+    name: 'John Doe',
+  },
+  {
+    id: '2',
+    email: 'jane@example.com',
+    password: 'Password123!',
+    name: 'Jane Smith',
+  },
+  {
+    id: '3',
+    email: 'admin@example.com',
+    password: 'admin123',
+    name: 'Admin User',
+  },
 ];
 
 // Middleware
@@ -33,7 +48,7 @@ app.get('/health', (req, res) => {
 // Authentication endpoints
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
-console.log('Login attempt for email:', email);
+  console.log('Login attempt for email:', email);
   // Validate input
   if (!email || !password) {
     return res.status(400).json({
@@ -43,7 +58,9 @@ console.log('Login attempt for email:', email);
   }
 
   // Find user in mock database
-  const user = mockUsers.find(u => u.email === email && u.password === password);
+  const user = mockUsers.find(
+    (u) => u.email === email && u.password === password
+  );
   console.log('user found:', user);
   if (!user) {
     return res.status(401).json({
@@ -57,7 +74,7 @@ console.log('Login attempt for email:', email);
     {
       userId: user.id,
       email: user.email,
-      name: user.name
+      name: user.name,
     },
     JWT_SECRET,
     { expiresIn: '24h' }
@@ -105,12 +122,15 @@ app.get('/api/auth/verify', (req, res) => {
   // Fallback to Authorization header for backward compatibility during transition
   if (!token) {
     const authorization = req.headers.authorization;
-    console.log("No cookie found, checking Authorization header:", authorization);
+    console.log(
+      'No cookie found, checking Authorization header:',
+      authorization
+    );
     if (authorization) {
       token = authorization.replace('Bearer ', '');
     }
   } else {
-    console.log("Found token in cookie");
+    console.log('Found token in cookie');
   }
 
   if (!token) {

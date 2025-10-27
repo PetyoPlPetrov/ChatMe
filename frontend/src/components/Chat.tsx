@@ -7,7 +7,6 @@ import {
   Message,
 } from '../store/api/chatApi';
 import { useGetUserByIdQuery } from '../store/api/usersApi';
-import { useNotifications } from '../hooks/useNotifications';
 import './Chat.css';
 
 interface ChatProps {
@@ -23,7 +22,6 @@ const Chat: React.FC<ChatProps> = ({ chatId, otherUserId }) => {
   const {
     data: messages,
     isLoading: messagesLoading,
-    refetch,
   } = useGetMessagesQuery(chatId);
   const { data: otherUser } = useGetUserByIdQuery(otherUserId);
   const [sendMessage, { isLoading: sendingMessage }] = useSendMessageMutation();
