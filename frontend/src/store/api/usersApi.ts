@@ -1,9 +1,9 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { User } from '../slices/authSlice';
 
-// Base query with authentication via nginx gateway
+// Base query with authentication via nginx gateway with v1 versioning
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:8080/api',
+  baseUrl: 'http://localhost:8080/api/v1',
   credentials: 'include', // Include cookies for authentication
   prepareHeaders: (headers) => {
     // Authentication is now handled automatically via httpOnly cookies

@@ -46,7 +46,7 @@ app.get('/health', (req, res) => {
 });
 
 // Authentication endpoints
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/v1/auth/login', (req, res) => {
   const { email, password } = req.body;
   console.log('Login attempt for email:', email);
   // Validate input
@@ -100,7 +100,7 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
-app.post('/api/auth/logout', (req, res) => {
+app.post('/api/v1/auth/logout', (req, res) => {
   // Clear the authentication cookie
   res.clearCookie('authToken', {
     httpOnly: true,
@@ -115,7 +115,7 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 // Auth verification endpoint for nginx auth_request
-app.get('/api/auth/verify', (req, res) => {
+app.get('/api/v1/auth/verify', (req, res) => {
   // Try to get token from cookie first (new method)
   let token = req.cookies?.authToken;
 
@@ -165,6 +165,7 @@ app.get('/api/auth/verify', (req, res) => {
     });
   }
 });
+
 
 // Catch-all route
 app.use('*', (req, res) => {

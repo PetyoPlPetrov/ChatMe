@@ -12,9 +12,9 @@ export interface LoginResponse {
   message: string;
 }
 
-// Base query that points to nginx gateway
+// Base query that points to nginx gateway with v1 versioning
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:8080/api/auth',
+  baseUrl: 'http://localhost:8080/api/v1/auth',
   credentials: 'include', // Include cookies in requests
   prepareHeaders: (headers) => {
     headers.set('Content-Type', 'application/json');

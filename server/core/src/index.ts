@@ -17,7 +17,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api/users', usersRoutes);
+app.use('/api/v1/users', usersRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -33,13 +33,15 @@ app.get('/', (req, res) => {
   res.json({
     message: 'ChatMe Mock API Server',
     version: '1.0.0',
+    apiVersion: 'v1',
     endpoints: {
       health: '/health',
-      users: '/api/users',
-      userById: '/api/users/:id',
+      users: '/api/v1/users',
+      userById: '/api/v1/users/:id',
     },
   });
 });
+
 
 // 404 handler
 app.use('*', (req, res) => {
