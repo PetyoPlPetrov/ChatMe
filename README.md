@@ -1,6 +1,6 @@
 # ChatMe
 
-A full-stack chat application with a clean, Airbnb-inspired design featuring React frontend and Node.js microservices backend. The architecture uses Docker containerization with an Nginx reverse proxy gateway for API routing and authentication.
+A [wip] chat application featuring React frontend and Node.js microservices backend. The architecture uses Docker containerization with an Nginx reverse proxy gateway for API routing and authentication.
 
 ## Project Structure
 
@@ -30,10 +30,10 @@ ChatMe/
 
 ### Authentication Flow
 1. Client requests API endpoints via Nginx gateway (port 8080)
-2. Nginx performs auth_request to auth service (/api/auth/verify)
-3. Auth service validates JWT token and returns user headers
-4. Nginx forwards authenticated requests to core service with user context
-5. Direct auth endpoints (/api/auth/*) bypass verification
+2. Nginx performs auth_request to auth service (/api/v1/auth/verify)
+3. Auth service validates JWT token from HTTP-only cookie and returns user headers
+4. Nginx forwards authenticated requests to core service with user context headers
+5. Direct auth endpoints (/api/v1/auth/*) bypass verification
 
 ## Technology Stack
 
@@ -119,7 +119,7 @@ Start all services with Docker:
 
 With Docker setup, all API calls go through the Nginx gateway:
 - **Gateway URL**: http://localhost:8080
-- **API Endpoints**: `/api/auth/login`, `/api/users`, etc.
+- **API Endpoints**: `/api/v1/auth/login`, `/api/v1/users`, etc.
 - **Health Check**: http://localhost:8080/health
 
 ## Available Scripts
@@ -170,13 +170,13 @@ Each service (core/auth) supports:
 All API calls go through the Nginx gateway (http://localhost:8080):
 
 ### Authentication Endpoints (Direct to Auth Service)
-- `POST /api/auth/login` - User authentication
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/verify` - Token verification (internal)
+- `POST /api/v1/auth/login` - User authentication
+- `POST /api/v1/auth/logout` - User logout
+- `GET /api/v1/auth/verify` - Token verification (internal)
 
 ### Core API Endpoints (Authenticated via Gateway)
-- `GET /api/users` - Get all users
-- `GET /api/users/:id` - Get specific user
+- `GET /api/v1/users` - Get all users
+- `GET /api/v1/users/:id` - Get specific user
 - `GET /health` - Gateway health check
 
 ### Service Health Checks (Direct Access)
@@ -282,13 +282,13 @@ curl http://localhost:5000/health           # Core service direct
 curl http://localhost:5001/health           # Auth service direct
 
 # Authentication flow
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123"}'
+  -d '{"email":"john@example.com","password":"Password123!"}'
 
-# Authenticated API calls (replace YOUR_TOKEN with actual JWT)
-curl http://localhost:8080/api/users \
-  -H "Authorization: Bearer YOUR_TOKEN"
+# Authenticated API calls (cookies are sent automatically)
+curl http://localhost:8080/api/v1/users \
+  -H "Cookie: authToken=your_cookie_value"
 ```
 
 ## Contributing
